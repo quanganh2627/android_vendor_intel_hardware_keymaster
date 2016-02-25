@@ -23,7 +23,8 @@
 #include <keystore/keystore.h>
 
 #include <hardware/hardware.h>
-#include <hardware/keymaster.h>
+#include <hardware/keymaster0.h>
+#include "sep_keymaster.h"
 
 #include <openssl/evp.h>
 #include <openssl/bio.h>
@@ -82,7 +83,7 @@ struct RSA_Delete {
 };
 typedef UniquePtr<RSA, RSA_Delete> Unique_RSA;
 
-typedef UniquePtr<keymaster_device_t> Unique_keymaster_device_t;
+typedef UniquePtr<keymaster0_device_t> Unique_keymaster0_device_t;
 
 /* intel keymaster functions */
 int intel_keymaster_generate_rsa_keypair(const keymaster_rsa_keygen_params_t* rsa_params,
@@ -368,7 +369,7 @@ static int generate_ec_keypair(EVP_PKEY* pkey, const keymaster_ec_keygen_params_
 }
 
 __attribute__ ((visibility ("default")))
-int intel_keymaster_generate_keypair(const keymaster_device_t*,
+int intel_keymaster_generate_keypair(const keymaster0_device_t*,
         const keymaster_keypair_t key_type, const void* key_params,
         uint8_t** keyBlob, size_t* keyBlobLength) {
 
@@ -408,7 +409,7 @@ int intel_keymaster_generate_keypair(const keymaster_device_t*,
 }
 
 __attribute__ ((visibility ("default")))
-int intel_keymaster_import_keypair(const keymaster_device_t*,
+int intel_keymaster_import_keypair(const keymaster0_device_t*,
         const uint8_t* key, const size_t key_length,
         uint8_t** key_blob, size_t* key_blob_length) {
     if (key == NULL) {
@@ -451,7 +452,7 @@ int intel_keymaster_import_keypair(const keymaster_device_t*,
 }
 
 __attribute__ ((visibility ("default")))
-int intel_keymaster_get_keypair_public(const struct keymaster_device*,
+int intel_keymaster_get_keypair_public(const struct keymaster0_device*,
         const uint8_t* key_blob, const size_t key_blob_length,
         uint8_t** x509_data, size_t* x509_data_length) {
 
@@ -596,7 +597,7 @@ static int sign_rsa(EVP_PKEY* pkey, keymaster_rsa_sign_params_t* sign_params, co
 }
 
 __attribute__ ((visibility ("default")))
-int intel_keymaster_sign_data(const keymaster_device_t*,
+int intel_keymaster_sign_data(const keymaster0_device_t*,
         const void* params,
         const uint8_t* keyBlob, const size_t keyBlobLength,
         const uint8_t* data, const size_t dataLength,
@@ -720,7 +721,7 @@ static int verify_rsa(EVP_PKEY* pkey, keymaster_rsa_sign_params_t* sign_params,
 }
 
 __attribute__ ((visibility ("default")))
-int intel_keymaster_verify_data(const keymaster_device_t*,
+int intel_keymaster_verify_data(const keymaster0_device_t*,
         const void* params,
         const uint8_t* keyBlob, const size_t keyBlobLength,
         const uint8_t* signedData, const size_t signedDataLength,
@@ -798,13 +799,13 @@ int intel_keymaster_generate_rsa_keypair(const keymaster_rsa_keygen_params_t* rs
     cmd_len = cmd_buf->cmd_data_length + offsetof(intel_keymaster_firmware_cmd_t, cmd_data);
 
     rsp_len = INTEL_KEYMASTER_MAX_MESSAGE_SIZE;
-    sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
-                                     &rsp_len);
-
-    if (sep_ret != SEP_KEYMASTER_SUCCESS) {
-        ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
-        return -1;
-    }
+    //sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
+                                     //&rsp_len);
+//
+    //if (sep_ret != SEP_KEYMASTER_SUCCESS) {
+        //ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
+        //return -1;
+    //}
 
     // response should contain at least rsp_id, rsp_result_and_data_length and result
     if (rsp_len < offsetof(intel_keymaster_firmware_rsp_t, rsp_data)) {
@@ -917,13 +918,13 @@ int intel_keymaster_import_rsa_keypair(const RSA *rsa,
     BN_bn2bin(rsa->d, rsa_key->bytes + modulus_length + public_exponent_length);
 
     rsp_len = INTEL_KEYMASTER_MAX_MESSAGE_SIZE;
-    sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
-                                     &rsp_len);
-
-    if (sep_ret != SEP_KEYMASTER_SUCCESS) {
-        ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
-        return -1;
-    }
+    //sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
+                                     //&rsp_len);
+//
+    //if (sep_ret != SEP_KEYMASTER_SUCCESS) {
+        //ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
+        //return -1;
+    //}
 
     // response should contain at least rsp_id, rsp_result_and_data_length and result
     if (rsp_len < offsetof(intel_keymaster_firmware_rsp_t, rsp_data)) {
@@ -1019,13 +1020,13 @@ EVP_PKEY* intel_keymaster_unwrap_key(const uint8_t* keyBlob, const size_t keyBlo
     memcpy(key_blob->key_blob, keyBlob, keyBlobLength);
 
     rsp_len = INTEL_KEYMASTER_MAX_MESSAGE_SIZE;
-    sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
-                                     &rsp_len);
-
-    if (sep_ret != SEP_KEYMASTER_SUCCESS) {
-        ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
-        return NULL;
-    }
+    //sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
+                                     //&rsp_len);
+//
+    //if (sep_ret != SEP_KEYMASTER_SUCCESS) {
+        //ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
+        //return NULL;
+    //}
 
     // response should contain at least rsp_id, rsp_result_and_data_length and result
     if (rsp_len < offsetof(intel_keymaster_firmware_rsp_t, rsp_data)) {
@@ -1160,13 +1161,13 @@ int intel_keymaster_sign_rsa(const uint8_t* keyBlob, const size_t keyBlobLength,
     memcpy(signing_data->buffer + keyBlobLength, data, dataLength);
 
     rsp_len = INTEL_KEYMASTER_MAX_MESSAGE_SIZE;
-    sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
-                                     &rsp_len);
-
-    if (sep_ret != SEP_KEYMASTER_SUCCESS) {
-        ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
-        return -1;
-    }
+    //sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
+                                     //&rsp_len);
+//
+    //if (sep_ret != SEP_KEYMASTER_SUCCESS) {
+        //ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
+        //return -1;
+    //}
 
     // response should contain at least rsp_id, rsp_result_and_data_length and result
     if (rsp_len < offsetof(intel_keymaster_firmware_rsp_t, rsp_data)) {
@@ -1273,13 +1274,13 @@ int intel_keymaster_verify_rsa(const uint8_t* keyBlob, const size_t keyBlobLengt
            signatureLength);
 
     rsp_len = INTEL_KEYMASTER_MAX_MESSAGE_SIZE;
-    sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
-                                     &rsp_len);
-
-    if (sep_ret != SEP_KEYMASTER_SUCCESS) {
-        ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
-        return -1;
-    }
+    //sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
+                                     //&rsp_len);
+//
+    //if (sep_ret != SEP_KEYMASTER_SUCCESS) {
+        //ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
+        //return -1;
+    //}
 
     // response should contain at least rsp_id, rsp_result_and_data_length and result
     if (rsp_len < offsetof(intel_keymaster_firmware_rsp_t, rsp_data)) {
@@ -1303,7 +1304,7 @@ int intel_keymaster_verify_rsa(const uint8_t* keyBlob, const size_t keyBlobLengt
     return 0;
 }
 
-int intel_keymaster_delete_keypair(const struct keymaster_device*,
+int intel_keymaster_delete_keypair(const struct keymaster0_device*,
         const uint8_t* keyBlob, const size_t keyBlobLength)
 {
     UniquePtr<intel_keymaster_firmware_cmd_t> cmd_buf(
@@ -1340,13 +1341,13 @@ int intel_keymaster_delete_keypair(const struct keymaster_device*,
     memcpy(key_blob->key_blob, keyBlob, keyBlobLength);
 
     rsp_len = INTEL_KEYMASTER_MAX_MESSAGE_SIZE;
-    sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
-                                     &rsp_len);
-
-    if (sep_ret != SEP_KEYMASTER_SUCCESS) {
-        ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
-        return -1;
-    }
+    //sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
+                                     //&rsp_len);
+//
+    //if (sep_ret != SEP_KEYMASTER_SUCCESS) {
+        //ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
+        //return -1;
+    //}
 
     // response should contain at least rsp_id, rsp_result_and_data_length and result
     if (rsp_len < offsetof(intel_keymaster_firmware_rsp_t, rsp_data)) {
@@ -1370,7 +1371,7 @@ int intel_keymaster_delete_keypair(const struct keymaster_device*,
     return 0;
 }
 
-int intel_keymaster_delete_all(const struct keymaster_device*)
+int intel_keymaster_delete_all(const struct keymaster0_device*)
 {
     UniquePtr<intel_keymaster_firmware_cmd_t> cmd_buf(
        static_cast<intel_keymaster_firmware_cmd_t *>(malloc(INTEL_KEYMASTER_MAX_MESSAGE_SIZE)));
@@ -1392,13 +1393,13 @@ int intel_keymaster_delete_all(const struct keymaster_device*)
     cmd_len = cmd_buf->cmd_data_length + offsetof(intel_keymaster_firmware_cmd_t, cmd_data);
 
     rsp_len = INTEL_KEYMASTER_MAX_MESSAGE_SIZE;
-    sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
-                                     &rsp_len);
-
-    if (sep_ret != SEP_KEYMASTER_SUCCESS) {
-        ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
-        return -1;
-    }
+    //sep_ret = sep_keymaster_send_cmd((uint8_t *)cmd_buf.get(), cmd_len, (uint8_t *)rsp_buf.get(),
+                                     //&rsp_len);
+//
+    //if (sep_ret != SEP_KEYMASTER_SUCCESS) {
+        //ALOGE("sep_keymaster_send_cmd() returned error %d", sep_ret);
+        //return -1;
+    //}
 
     // response should contain at least rsp_id, rsp_result_and_data_length and result
     if (rsp_len < offsetof(intel_keymaster_firmware_rsp_t, rsp_data)) {
@@ -1424,7 +1425,7 @@ int intel_keymaster_delete_all(const struct keymaster_device*)
 
 /* keymaster module */
 
-typedef UniquePtr<keymaster_device_t> Unique_keymaster_device_t;
+typedef UniquePtr<keymaster0_device_t> Unique_keymaster0_device_t;
 
 /* Close an opened intel keymaster instance */
 static int intel_keymaster_close(hw_device_t *dev) {
@@ -1440,7 +1441,7 @@ static int intel_keymaster_open(const hw_module_t* module, const char* name,
     if (strcmp(name, KEYSTORE_KEYMASTER) != 0)
         return -EINVAL;
 
-    Unique_keymaster_device_t dev(new keymaster_device_t);
+    Unique_keymaster0_device_t dev(new keymaster0_device_t);
     if (dev.get() == NULL)
         return -ENOMEM;
 

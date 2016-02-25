@@ -19,10 +19,14 @@ LOCAL_MODULE := keystore.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SRC_FILES := intel_keymaster.cpp
 LOCAL_C_INCLUDES := \
-	system/security/keystore \
-	external/openssl/include
+	system/security/keystore/include \
+	external/boringssl/include
 LOCAL_CFLAGS = -fvisibility=hidden -Wall -Werror
-LOCAL_SHARED_LIBRARIES := libcutils libcrypto liblog libkeystore_binder libkeymaster
+
+# Ignore benign warnings for now.
+LOCAL_CLANG_CFLAGS += -Wno-error=unused-const-variable -Wno-error=unused-private-field
+
+LOCAL_SHARED_LIBRARIES := libcutils libcrypto liblog libkeystore_binder
 LOCAL_MODULE_TAGS := optional
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 include $(BUILD_SHARED_LIBRARY)
