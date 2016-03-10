@@ -26,7 +26,7 @@ LOCAL_CFLAGS = -fvisibility=hidden -Wall -Werror
 # Ignore benign warnings for now.
 LOCAL_CLANG_CFLAGS += -Wno-error=unused-const-variable -Wno-error=unused-private-field
 
-LOCAL_SHARED_LIBRARIES := libcutils libcrypto liblog libkeystore_binder
+LOCAL_SHARED_LIBRARIES := libcutils libcrypto liblog libkeystore_binder libkeymaster1
 LOCAL_MODULE_TAGS := optional
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 include $(BUILD_SHARED_LIBRARY)
